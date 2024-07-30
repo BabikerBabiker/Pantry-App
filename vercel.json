@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/pantry/(.*)",
+      "destination": "/$1"
+    }
+  ]
+}
