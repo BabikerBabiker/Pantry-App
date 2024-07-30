@@ -1,7 +1,11 @@
 "use client";
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RemoveIcon from '@mui/icons-material/Remove';
 import {
   Box,
   Button,
+  IconButton,
   Modal,
   Stack,
   TextField,
@@ -26,9 +30,9 @@ const style = {
   transform: "translate(-50%, -50%)",
   width: "90vw",
   maxWidth: 400,
-  bgcolor: "white",
+  bgcolor: "#ffffff",
   borderRadius: 2,
-  boxShadow: 24,
+  boxShadow: 2,
   p: 4,
   display: "flex",
   flexDirection: "column",
@@ -85,6 +89,12 @@ export default function Home() {
     await updatePantry();
   };
 
+  const delAllItems = async (item) => {
+    const docRef = doc(collection(firestore, "pantry"), item);
+    await deleteDoc(docRef);
+    await updatePantry();
+  };
+
   return (
     <Box
       width="100vw"
@@ -95,6 +105,8 @@ export default function Home() {
       alignItems="center"
       gap="10px"
       px={2}
+      bgcolor="#f5f5f5"
+      fontFamily="Arial, sans-serif"
     >
       <Modal
         open={open}
@@ -123,14 +135,18 @@ export default function Home() {
                 setItemName("");
                 handleClose();
               }}
-              sx={{ width: '100%' }}
+              sx={{ width: '100%', backgroundColor: "#936c82", color: "#fff" }}
             >
               Add
             </Button>
           </Box>
         </Box>
       </Modal>
-      <Button variant="contained" onClick={handleOpen} sx={{ mt: 3 }}>
+      <Button
+        variant="contained"
+        onClick={handleOpen}
+        sx={{ mt: 3, backgroundColor: "#936c82", color: "#fff" }}
+      >
         Add Item
       </Button>
       <Box
@@ -140,9 +156,10 @@ export default function Home() {
         borderRadius={2}
         overflow="hidden"
         width="100%"
-        maxWidth="800px"
+        maxWidth={{ xs: "100%", sm: "80%", md: "70%", lg: "60%" }}
         height="auto"
-        maxHeight="800px"
+        maxHeight="600px"
+        bgcolor="#ffffff"
       >
         <Box
           width="100%"
@@ -171,6 +188,7 @@ export default function Home() {
         <Box
           flex="1"
           overflow="auto"
+          p={2}
         >
           <Stack
             width="100%"
@@ -182,26 +200,28 @@ export default function Home() {
                 width="100%"
                 minHeight="80px"
                 display={"flex"}
-                flexDirection={{ xs: 'column', sm: 'row' }}
+                flexDirection="row"
                 justifyContent={"space-between"}
                 alignItems={"center"}
                 bgcolor={"#f0f0f0"}
                 paddingX={2}
-                borderRadius={2}
+                paddingY={1}
+                borderRadius={0}
                 border={"1px solid #ddd"}
                 gap={1}
               >
                 <Box
-                  flex="1"
+                  flex="2"
                   display="flex"
-                  justifyContent={{ xs: 'flex-start', sm: 'flex-start' }}
+                  justifyContent={"flex-start"}
                   alignItems="center"
                 >
                   <Typography
                     variant={"h6"}
                     color={"#000"}
                     textAlign={"left"}
-                    width={{ xs: '100%', sm: 'auto' }}
+                    width="auto"
+                    whiteSpace="nowrap"
                   >
                     {name.charAt(0).toUpperCase() + name.slice(1)}
                   </Typography>
@@ -213,12 +233,34 @@ export default function Home() {
                   alignItems="center"
                 >
                   <Typography variant={"body1"} color={"#555"}>
-                    Quantity: {count}
+                    {count}
                   </Typography>
                 </Box>
-                <Button variant="contained" color="error" onClick={() => delItem(name)} sx={{ mt: { xs: 1, sm: 0 } }}>
-                  Delete
-                </Button>
+                <Box
+                  flex="2"
+                  display="flex"
+                  justifyContent={"flex-end"}
+                  alignItems="center"
+                >
+                  <IconButton
+                    onClick={() => addItem(name)}
+                    sx={{ marginRight: 1, color: "#0B6623" }}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => delItem(name)}
+                    sx={{ marginRight: 1, color: "#8B0000" }}
+                  >
+                    <RemoveIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => delAllItems(name)}
+                    sx={{ color: "#8B0000" }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
               </Box>
             ))}
           </Stack>
