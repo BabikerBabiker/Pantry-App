@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'export',
-    basePath: '/Pantry-App',
-    assetPrefix: '/Pantry-App/',
+    basePath: '',
+    assetPrefix: '',
 };
   
 export default nextConfig;
