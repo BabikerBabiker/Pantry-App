@@ -143,7 +143,6 @@ export default function Home() {
         maxWidth="800px"
         height="auto"
         maxHeight="800px"
-        gap={1}
       >
         <Box
           width="100%"
