@@ -158,7 +158,7 @@ export default function Home() {
         width="100%"
         maxWidth={{ xs: "100%", sm: "80%", md: "70%", lg: "60%" }}
         height="auto"
-        maxHeight="500px"
+        maxHeight={{ xs: "450px", sm: "450px", md: "700px", lg: "700px" }}
         bgcolor="#ffffff"
       >
         <Box
