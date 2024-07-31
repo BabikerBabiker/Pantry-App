@@ -1,25 +1,9 @@
-"use client";
+"use client"
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RemoveIcon from '@mui/icons-material/Remove';
-import {
-  Box,
-  Button,
-  IconButton,
-  Modal,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  setDoc,
-} from "firebase/firestore";
+import { Box, Button, FormControl, IconButton, InputLabel, MenuItem, Modal, Select, Stack, TextField, Typography } from "@mui/material";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { firestore } from "../firebase";
 
@@ -42,24 +26,49 @@ const style = {
 export default function Home() {
   const [pantry, setPantry] = useState([]);
   const [open, setOpen] = useState(false);
+  const [itemName, setItemName] = useState("");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("name"); // Sort criterion (name or quantity)
+  const [sortDirection, setSortDirection] = useState("asc"); // Sort direction (asc or desc)
+
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-  const [itemName, setItemName] = useState("");
 
   const updatePantry = async () => {
+    // Query the collection
     const snapshot = query(collection(firestore, "pantry"));
-    const docs = await getDocs(snapshot);
-    const pantryList = [];
-    docs.forEach((doc) => {
-      pantryList.push({ name: doc.id, ...doc.data() });
+    
+    // Get the documents
+    const querySnapshot = await getDocs(snapshot);
+    
+    // Extract data from documents
+    const pantryList = querySnapshot.docs.map(doc => ({
+      name: doc.id,
+      ...doc.data()
+    }));
+    
+    // Filter by search
+    const filteredPantry = pantryList.filter(item =>
+      item.name.toLowerCase().includes(search.toLowerCase())
+    );
+  
+    // Sort
+    filteredPantry.sort((a, b) => {
+      const multiplier = sortDirection === "asc" ? 1 : -1;
+      if (sort === "name") {
+        return multiplier * a.name.localeCompare(b.name);
+      } else if (sort === "quantity") {
+        return multiplier * (b.count - a.count); // Fix for descending order
+      }
+      return 0;
     });
-    console.log(pantryList);
-    setPantry(pantryList);
-  };
+  
+    setPantry(filteredPantry);
+  }; 
 
   useEffect(() => {
     updatePantry();
-  }, []);
+  }, [search, sort, sortDirection]);
 
   const addItem = async (item) => {
     const docRef = doc(collection(firestore, "pantry"), item);
@@ -93,6 +102,15 @@ export default function Home() {
     const docRef = doc(collection(firestore, "pantry"), item);
     await deleteDoc(docRef);
     await updatePantry();
+  };
+
+  const handleSortChange = (criterion) => {
+    if (sort === criterion) {
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSort(criterion);
+      setSortDirection("asc");
+    }
   };
 
   return (
@@ -142,13 +160,6 @@ export default function Home() {
           </Box>
         </Box>
       </Modal>
-      <Button
-        variant="contained"
-        onClick={handleOpen}
-        sx={{ mt: 3, backgroundColor: "#936c82", color: "#fff" }}
-      >
-        Add Item
-      </Button>
       <Box
         display="flex"
         flexDirection="column"
@@ -158,7 +169,7 @@ export default function Home() {
         width="100%"
         maxWidth={{ xs: "100%", sm: "80%", md: "70%", lg: "60%" }}
         height="auto"
-        maxHeight={{ xs: "400px", sm: "400px", md: "700px", lg: "700px" }}
+        maxHeight={{ xs: "450px", sm: "450px", md: "700px", lg: "700px" }}
         bgcolor="#ffffff"
       >
         <Box
@@ -184,6 +195,43 @@ export default function Home() {
           >
             Pantry Items
           </Typography>
+        </Box>
+        <Box
+          width="100%"
+          bgcolor="#e0e0e0"
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          padding={1}
+        >
+          <Button
+            variant="contained"
+            onClick={handleOpen}
+            sx={{ backgroundColor: "#936c82", color: "#fff" }}
+          >
+            Add Item
+          </Button>
+          <Box display="flex" alignItems="center">
+            <FormControl sx={{ minWidth: 120, mr: 2 }}>
+              <InputLabel id="sort-label">Sort By</InputLabel>
+              <Select
+                labelId="sort-label"
+                value={sort}
+                onChange={(e) => handleSortChange(e.target.value)}
+                label="Sort By"
+              >
+                <MenuItem value="name">Name</MenuItem>
+                <MenuItem value="quantity">Quantity</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="Search"
+              variant="outlined"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ width: 100 }}
+            />
+          </Box>
         </Box>
         <Box
           flex="1"
@@ -232,31 +280,39 @@ export default function Home() {
                   justifyContent={"center"}
                   alignItems="center"
                 >
-                  <Typography variant={"body1"} color={"#555"}>
+                  <Typography
+                    variant={"h6"}
+                    color={"#000"}
+                    textAlign={"center"}
+                  >
                     {count}
                   </Typography>
                 </Box>
                 <Box
-                  flex="2"
+                  flex="1"
                   display="flex"
                   justifyContent={"flex-end"}
                   alignItems="center"
                 >
                   <IconButton
+                    sx={{
+                      color: '#4caf50',
+                      mr: 1
+                    }}
                     onClick={() => addItem(name)}
-                    sx={{ marginRight: 1, color: "#0B6623" }}
                   >
                     <AddIcon />
                   </IconButton>
                   <IconButton
+                    color="error"
                     onClick={() => delItem(name)}
-                    sx={{ marginRight: 1, color: "#8B0000" }}
+                    sx={{ mr: 1 }}
                   >
                     <RemoveIcon />
                   </IconButton>
                   <IconButton
+                    color="error"
                     onClick={() => delAllItems(name)}
-                    sx={{ color: "#8B0000" }}
                   >
                     <DeleteIcon />
                   </IconButton>
