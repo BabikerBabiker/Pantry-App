@@ -334,7 +334,7 @@ export default function Home() {
                 onChange={handleSortChange}
                 size="small"
                 minWidth="800px"
-                sx={{ minWidth: { xs: 200, sm: 400, md: 400, lg: 800 } }}
+                sx={{ minWidth: { xs: 220, sm: 400, md: 400, lg: 800 } }}
               >
                 <MenuItem value="name">Name</MenuItem>
                 <MenuItem value="quantity">Quantity</MenuItem>
@@ -410,7 +410,7 @@ export default function Home() {
         onClick={handleOpen}
         sx={{
           position: "fixed",
-          bottom: { xs: 170, sm: 150 },
+          bottom: { xs: 40, sm: 150 },
           right: { xs: 15, sm: 215 },
           zIndex: 1000,
           display: { xs: "block", sm: "block" },
@@ -428,7 +428,7 @@ export default function Home() {
         onClick={removeAll}
         sx={{
           position: "fixed",
-          bottom: { xs: 170, sm: 150 },
+          bottom: { xs: 40, sm: 150 },
           right: { xs: 273, sm: 1068 },
           zIndex: 1000,
           display: { xs: "block", sm: "block" },
