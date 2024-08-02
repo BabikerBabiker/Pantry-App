@@ -1,5 +1,7 @@
 "use client";
 import AddIcon from "@mui/icons-material/Add";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RemoveIcon from "@mui/icons-material/Remove";
 import {
@@ -44,6 +46,7 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
   const [itemCategory, setItemCategory] = useState("");
+  const [itemQuantity, setItemQuantity] = useState(1);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
@@ -51,6 +54,9 @@ export default function Home() {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const capitalizeWords = (str) =>
+    str.replace(/\b\w/g, (char) => char.toUpperCase());
 
   const updatePantry = async () => {
     const snapshot = query(collection(firestore, "pantry"));
@@ -87,16 +93,17 @@ export default function Home() {
     updatePantry();
   }, [search, sort, sortDirection, selectedCategory]);
 
-  const addItem = async (itemName, category) => {
-    const docRef = doc(collection(firestore, "pantry"), itemName);
+  const addItem = async (itemName, category, quantity) => {
+    const capitalizedItemName = capitalizeWords(itemName);
+    const docRef = doc(collection(firestore, "pantry"), capitalizedItemName);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const data = docSnap.data();
-      const newCount = (data.count || 0) + 1;
+      const newCount = (data.count || 0) + quantity;
       await setDoc(docRef, { count: newCount, category }, { merge: true });
     } else {
-      await setDoc(docRef, { count: 1, category });
+      await setDoc(docRef, { count: quantity, category });
     }
     await updatePantry();
   };
@@ -116,19 +123,29 @@ export default function Home() {
     await updatePantry();
   };
 
-  const delAllItems = async (itemName) => {
-    const docRef = doc(collection(firestore, "pantry"), itemName);
-    await deleteDoc(docRef);
+  const delAllItems = async () => {
+    const snapshot = await getDocs(collection(firestore, "pantry"));
+    const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
     await updatePantry();
+  };
+
+  const removeAll = async () => {
+    try {
+      const snapshot = await getDocs(collection(firestore, "pantry"));
+
+      const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+
+      await Promise.all(deletePromises);
+
+      await updatePantry();
+    } catch (error) {
+      console.error("Error deleting all items:", error);
+    }
   };
 
   const handleSortChange = (event) => {
     const criterion = event.target.value;
-    if (criterion === "category") {
-      setSelectedCategory("");
-    } else {
-      setSelectedCategory("");
-    }
     if (sort === criterion) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -183,6 +200,15 @@ export default function Home() {
             onChange={(e) => setItemName(e.target.value)}
             sx={{ mb: 2 }}
           />
+          <TextField
+            label="Quantity"
+            variant="outlined"
+            fullWidth
+            type="number"
+            value={itemQuantity}
+            onChange={(e) => setItemQuantity(Number(e.target.value))}
+            sx={{ mb: 2 }}
+          />
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="category-label">Category</InputLabel>
             <Select
@@ -201,12 +227,13 @@ export default function Home() {
           <Button
             variant="contained"
             onClick={() => {
-              addItem(itemName, itemCategory);
+              addItem(itemName, itemCategory, itemQuantity);
               setItemName("");
               setItemCategory("");
+              setItemQuantity(1);
               handleClose();
             }}
-            sx={{ width: "100%", backgroundColor: "#936c82", color: "#fff" }}
+            sx={{ width: "100%", backgroundColor: "#1565C0", color: "#fff" }}
           >
             Add
           </Button>
@@ -214,127 +241,77 @@ export default function Home() {
       </Modal>
 
       <Box
+        width="100%"
+        maxWidth="1000px"
         display="flex"
         flexDirection="column"
-        border="2px solid #000"
-        borderRadius={2}
-        overflow="hidden"
-        width="100%"
-        maxWidth={{ xs: "100%", sm: "80%", md: "70%", lg: "60%" }}
-        height="auto"
-        maxHeight={{ xs: "450px", sm: "450px", md: "700px", lg: "700px" }}
         bgcolor="#ffffff"
-        sx={{ boxShadow: 2 }}
+        borderRadius={2}
+        boxShadow={2}
+        overflow="hidden"
+        maxHeight={{ xs: "400px", sm: "400px" }}
+        height="calc(100vh - 80px)"
+        position="relative"
       >
+        {}
         <Box
-          width="100%"
-          height="auto"
-          bgcolor="#936c82"
-          borderBottom="2px solid #000"
-          display="flex"
-          flexDirection="column"
-          justifyContent="center"
-          alignItems="center"
-          borderTopLeftRadius={2}
-          borderTopRightRadius={2}
-          px={2}
-          py={1}
           position="sticky"
           top={0}
-          zIndex={1}
-          gap={1}
+          bgcolor="#1565C0"
+          py={2}
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          boxShadow="0 2px 4px rgba(0,0,0,0.1)"
+          zIndex={1000}
         >
           <Typography
             variant="h5"
             color="#fff"
             textAlign="center"
-            sx={{ fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
+            sx={{
+              fontSize: { xs: "1.2rem", sm: "1.4rem" },
+              fontWeight: "bold",
+            }}
           >
             Pantry
           </Typography>
+        </Box>
+
+        {}
+        <Box
+          display="flex"
+          flexDirection="column"
+          px={2}
+          py={1}
+          gap={1}
+          bgcolor="#e0e0e0"
+          overflow="auto"
+          flex={1}
+        >
+          {}
           <Box
             display="flex"
-            flexDirection="row"
-            flexWrap="wrap"
+            flexDirection={{ xs: "column", sm: "row" }}
             gap={1}
-            justifyContent="center"
-            alignItems="center"
-            width="100%"
           >
-            <Button
-              variant="contained"
-              onClick={handleOpen}
-              sx={{
-                backgroundColor: "#4caf50",
-                color: "#fff",
-                flex: "1 1 auto",
-                minWidth: 100,
-              }}
-            >
-              Add Item
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => {
-                pantry.forEach((item) => delAllItems(item.name));
-              }}
-              sx={{
-                backgroundColor: "#f44336",
-                color: "#fff",
-                flex: "1 1 auto",
-                minWidth: 100,
-              }}
-            >
-              Delete All
-            </Button>
             <TextField
               label="Search"
               variant="outlined"
               size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              sx={{
-                flex: "1 1 auto",
-                maxWidth: 200,
-                backgroundColor: "#ffffff",
-              }}
+              sx={{ width: "100%", mb: 1 }}
             />
-            <FormControl
-              size="small"
-              sx={{
-                flex: "1 1 auto",
-                maxWidth: 200,
-                backgroundColor: "#ffffff",
-              }}
-            >
-              <InputLabel>Sort By</InputLabel>
+            <FormControl variant="outlined" size="small" sx={{ width: "100%" }}>
+              <InputLabel id="category-select-label">Category</InputLabel>
               <Select
-                value={sort}
-                onChange={handleSortChange}
-                label="Sort By"
-                sx={{ backgroundColor: "#ffffff" }}
-              >
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="quantity">Quantity</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl
-              size="small"
-              sx={{
-                flex: "1 1 auto",
-                maxWidth: 200,
-                backgroundColor: "#ffffff",
-              }}
-            >
-              <InputLabel>Category</InputLabel>
-              <Select
+                labelId="category-select-label"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 label="Category"
-                sx={{ backgroundColor: "#ffffff" }}
               >
-                <MenuItem value="">All</MenuItem>
+                <MenuItem value="All">All</MenuItem>
                 {categories.map((category, index) => (
                   <MenuItem key={index} value={category}>
                     {category}
@@ -343,43 +320,81 @@ export default function Home() {
               </Select>
             </FormControl>
           </Box>
-        </Box>
 
-        <Box width="100%" maxHeight="calc(100vh - 200px)" overflow="auto" p={2}>
+          {}
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Typography variant="subtitle2">Sort by:</Typography>
+            <FormControl size="small" variant="outlined">
+              <Select
+                value={sort}
+                onChange={handleSortChange}
+                size="small"
+                minWidth="800px"
+                sx={{ minWidth: { xs: 200, sm: 400, md: 400, lg: 800 } }}
+              >
+                <MenuItem value="name">Name</MenuItem>
+                <MenuItem value="quantity">Quantity</MenuItem>
+              </Select>
+            </FormControl>
+            <IconButton
+              onClick={() =>
+                setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+              }
+              sx={{ ml: 1 }}
+            >
+              {sortDirection === "asc" ? (
+                <ArrowUpwardIcon />
+              ) : (
+                <ArrowDownwardIcon />
+              )}
+            </IconButton>
+          </Box>
+
+          {}
           {pantry.map((item) => (
             <Box
               key={item.name}
               display="flex"
               justifyContent="space-between"
               alignItems="center"
-              borderBottom="1px solid #ddd"
-              p={2}
-              sx={{ ":last-child": { borderBottom: "none" } }}
+              p={1}
+              bgcolor="#fff"
+              borderRadius={1}
+              boxShadow={1}
+              sx={{ mb: 0 }}
             >
-              <Typography
-                variant="body1"
-                flex={1}
-                noWrap
-                sx={{ textTransform: "capitalize" }}
-              >
+              <Typography variant="body1" sx={{ flex: 2 }}>
                 {item.name}
               </Typography>
-              <Typography variant="body1" flex={1} textAlign="center">
-                {item.count}
+              <Typography variant="body2" sx={{ flex: 1, textAlign: "center" }}>
+                {item.count} {item.count > 1 ? "units" : "unit"}
               </Typography>
-              <Box display="flex" alignItems="center" gap={1}>
+              <Box
+                sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}
+                minHeight={"auto"}
+              >
                 <IconButton
-                  onClick={() => addItem(item.name, item.category)}
+                  size="small"
                   color="success"
+                  onClick={() => addItem(item.name, item.category, 1)}
                 >
                   <AddIcon />
                 </IconButton>
-                <IconButton onClick={() => delItem(item.name)} color="error">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => delItem(item.name)}
+                >
                   <RemoveIcon />
                 </IconButton>
                 <IconButton
-                  onClick={() => delAllItems(item.name)}
+                  size="small"
                   color="error"
+                  onClick={() => delAllItems(item.name)}
                 >
                   <DeleteIcon />
                 </IconButton>
@@ -388,6 +403,42 @@ export default function Home() {
           ))}
         </Box>
       </Box>
+
+      <Button
+        variant="contained"
+        color="success"
+        onClick={handleOpen}
+        sx={{
+          position: "fixed",
+          bottom: { xs: 170, sm: 150 },
+          right: { xs: 15, sm: 215 },
+          zIndex: 1000,
+          display: { xs: "block", sm: "block" },
+          width: { xs: "auto", sm: "150px" },
+          fontSize: { xs: "0.75rem", sm: "1rem" },
+          borderRadius: { xs: "4px", sm: "8px" },
+        }}
+      >
+        Add Item
+      </Button>
+
+      <Button
+        variant="contained"
+        color="error"
+        onClick={removeAll}
+        sx={{
+          position: "fixed",
+          bottom: { xs: 170, sm: 150 },
+          right: { xs: 273, sm: 1068 },
+          zIndex: 1000,
+          display: { xs: "block", sm: "block" },
+          width: { xs: "auto", sm: "150px" },
+          fontSize: { xs: "0.75rem", sm: "1rem" },
+          borderRadius: { xs: "4px", sm: "8px" },
+        }}
+      >
+        Delete All
+      </Button>
     </Box>
   );
 }
