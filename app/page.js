@@ -2,7 +2,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import DeleteIcon from "@mui/icons-material/Delete";
 import RemoveIcon from "@mui/icons-material/Remove";
 import {
   Box,
@@ -390,13 +389,6 @@ export default function Home() {
                   onClick={() => delItem(item.name)}
                 >
                   <RemoveIcon />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => delAllItems(item.name)}
-                >
-                  <DeleteIcon />
                 </IconButton>
               </Box>
             </Box>
